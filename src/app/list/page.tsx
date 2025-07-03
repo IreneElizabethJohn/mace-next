@@ -10,7 +10,7 @@ export default async function ListPage({ searchParams }: any) {
   const cat = await wixClient.collections.getCollectionBySlug(
     searchParams.cat || "all-products"
   );
-  console.log(cat);
+  console.log(cat); //TODO:HANDLE SEARCH NAME
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
       {/* campaign */}

@@ -21,7 +21,6 @@ export default async function SinglePage({
   }
 
   const product = products.items[0];
-  console.log(product);
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-16">
       {/* IMG */}
@@ -68,7 +67,7 @@ export default async function SinglePage({
           </div>
         ))}
         <div className="h-[2px] bg-gray-100" />
-        {/* REVIEWS */}
+        {/* TODO:REVIEWS-fera/greview not possible so api trial needed */}
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 "use client";
+
 import { useWixClient } from "@/hooks/useWixClient";
+import { LoginState } from "@wix/sdk";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { useState } from "react";
 
 enum MODE {
@@ -10,9 +13,15 @@ enum MODE {
   EMAIL_VERIFICATION = "EMAIL_VERIFICATION",
 }
 
-export default function LoginPage() {
+const LoginPage = () => {
   const wixClient = useWixClient();
   const router = useRouter();
+
+  const isLoggedIn = wixClient.auth.loggedIn();
+
+  if (isLoggedIn) {
+    router.push("/");
+  }
 
   const [mode, setMode] = useState(MODE.LOGIN);
 
@@ -42,7 +51,84 @@ export default function LoginPage() {
       ? "Reset"
       : "Verify";
 
-  const handleSubmit = () => {};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      let response;
+
+      switch (mode) {
+        case MODE.LOGIN:
+          response = await wixClient.auth.login({
+            email,
+            password,
+          });
+          break;
+        case MODE.REGISTER:
+          response = await wixClient.auth.register({
+            email,
+            password,
+            profile: { nickname: username },
+          });
+          break;
+        case MODE.RESET_PASSWORD:
+          response = await wixClient.auth.sendPasswordResetEmail(
+            email,
+            window.location.href
+          );
+          setMessage("Password reset email sent. Please check your e-mail.");
+          break;
+        case MODE.EMAIL_VERIFICATION:
+          response = await wixClient.auth.processVerification({
+            verificationCode: emailCode,
+          });
+          break;
+        default:
+          break;
+      }
+
+      switch (response?.loginState) {
+        case LoginState.SUCCESS:
+          setMessage("Successful! You are being redirected.");
+          const tokens = await wixClient.auth.getMemberTokensForDirectLogin(
+            response.data.sessionToken!
+          );
+
+          Cookies.set("refreshToken", JSON.stringify(tokens.refreshToken), {
+            expires: 2,
+          });
+          wixClient.auth.setTokens(tokens);
+          router.push("/");
+          break;
+        case LoginState.FAILURE:
+          if (
+            response.errorCode === "invalidEmail" ||
+            response.errorCode === "invalidPassword"
+          ) {
+            setError("Invalid email or password!");
+          } else if (response.errorCode === "emailAlreadyExists") {
+            setError("Email already exists!");
+          } else if (response.errorCode === "resetPassword") {
+            setError("You need to reset your password!");
+          } else {
+            setError("Something went wrong!");
+          }
+        case LoginState.EMAIL_VERIFICATION_REQUIRED:
+          setMode(MODE.EMAIL_VERIFICATION);
+        case LoginState.OWNER_APPROVAL_REQUIRED:
+          setMessage("Your account is pending approval");
+        default:
+          break;
+      }
+    } catch (err) {
+      console.log(err);
+      setError("Something went wrong!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-80px)] px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 flex items-center justify-center">
@@ -138,4 +224,6 @@ export default function LoginPage() {
       </form>
     </div>
   );
-}
+};
+
+export default LoginPage;

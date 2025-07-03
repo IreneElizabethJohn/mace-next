@@ -11,7 +11,7 @@ const ProfilePage = async () => {
   const user = await wixClient.members.getCurrentMember({
     fieldsets: [members.Set.FULL],
   });
-  console.log("USER--->", user); //TODO:ISSUE SAYING MISSING SITE MEMEBER ID so memeber fn not working as expected
+  //Note:fixed issue in clientserver file by which authenticated users was not read for the getCurrentMember to work
 
   if (!user.member?.contactId) {
     return <div className="">Not logged in!</div>;
@@ -19,9 +19,10 @@ const ProfilePage = async () => {
 
   const orderRes = await wixClient.orders.searchOrders({
     search: {
-      filter: { "buyerInfo.contactId": { $eq: user.member?.contactId } }, //issue here
+      filter: { "buyerInfo.contactId": { $eq: user.member?.contactId } },
     },
   });
+  console.log("orders--->", orderRes);
 
   return (
     <div className="flex flex-col md:flex-row gap-24 md:h-[calc(100vh-180px)] items-center px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
@@ -74,6 +75,9 @@ const ProfilePage = async () => {
       <div className="w-full md:w-1/2">
         <h1 className="text-2xl">Orders</h1>
         <div className="mt-12 flex flex-col">
+          {orderRes.orders.length == 0 && (
+            <div className="text-xl">No orders yet!!!</div> //added temporarily since wix not upgraded to new plan
+          )}
           {orderRes.orders.map((order) => (
             <Link
               href={`/orders/${order._id}`}

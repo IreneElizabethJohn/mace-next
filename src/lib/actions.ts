@@ -12,7 +12,7 @@ export const updateUser = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
 
-  console.log(username);
+  console.log("USERNAME--->", username);
 
   try {
     const response = await wixClient.members.updateMember(id, {
@@ -25,7 +25,7 @@ export const updateUser = async (formData: FormData) => {
       profile: { nickname: username || undefined },
     });
 
-    console.log(response);
+    console.log("RESPONSE------", response);
   } catch (err) {
     console.log(err);
   }
